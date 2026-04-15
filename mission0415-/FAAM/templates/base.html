@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FAAM - 女装信息平台{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="{{ url_for('index') }}">FAAM</a></h1>
+                <p class="tagline">竞品女装信息平台</p>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">首页</a></li>
+                    <li><a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">商品查询</a></li>
+                    <li><a href="{{ url_for('new_arrivals') }}" class="{% if request.endpoint == 'new_arrivals' %}active{% endif %}">每日新品</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 FAAM Project. 专注A New Day & Wild Fable品牌分析</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

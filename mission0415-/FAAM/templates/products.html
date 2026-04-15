@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}商品查询 - FAAM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>商品查询</h2>
+    <p>共找到 {{ total }} 件商品</p>
+</div>
+
+<div class="filters">
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label for="search">搜索:</label>
+            <input type="text" id="search" name="search" value="{{ search }}" placeholder="商品名称...">
+        </div>
+
+        <div class="filter-group">
+            <label for="brand">品牌:</label>
+            <select id="brand" name="brand">
+                <option value="">全部品牌</option>
+                <option value="A New Day" {% if brand == 'A New Day' %}selected{% endif %}>A New Day</option>
+                <option value="Wild Fable" {% if brand == 'Wild Fable' %}selected{% endif %}>Wild Fable</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="is_new">新品:</label>
+            <select id="is_new" name="is_new">
+                <option value="">全部</option>
+                <option value="yes" {% if is_new == 'yes' %}selected{% endif %}>仅看新品</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{{ url_for('products') }}" class="btn btn-secondary">重置</a>
+    </form>
+</div>
+
+{% if products %}
+<div class="products-grid">
+    {% for product in products %}
+    <div class="product-card">
+        <div class="product-image">
+            {% if product.image_url %}
+            <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/images/placeholder.jpg'">
+            {% else %}
+            <div class="no-image">暂无图片</div>
+            {% endif %}
+
+            {% if product.is_new == 'Yes' %}
+            <span class="badge badge-new">NEW</span>
+            {% endif %}
+            {% if product.is_clearance == 'Yes' %}
+            <span class="badge badge-clearance">清仓</span>
+            {% endif %}
+        </div>
+
+        <div class="product-info">
+            <h4 class="product-title">{{ product.title }}</h4>
+            <p class="product-brand">{{ product.brand }}</p>
+
+            <div class="product-price-section">
+                <span class="current-price">${{ "%.2f"|format(product.price) if product.price else 'N/A' }}</span>
+                {% if product.original_price and product.original_price != product.price %}
+                <span class="original-price">${{ "%.2f"|format(product.original_price) }}</span>
+                {% endif %}
+            </div>
+
+            {% if product.rating %}
+            <div class="product-rating">
+                <span class="stars">{{ "%.1f"|format(product.rating) }} ★</span>
+                <span class="count">({{ product.review_count }})</span>
+            </div>
+            {% endif %}
+
+            {% if product.color %}
+            <p class="product-color">颜色: {{ product.color }}</p>
+            {% endif %}
+
+            {% if product.size_summary %}
+            <p class="product-size">{{ product.size_summary }}</p>
+            {% endif %}
+
+            <div class="product-actions">
+                {% if product.product_url %}
+                <a href="{{ product.product_url }}" target="_blank" class="btn btn-small">查看详情</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}" class="page-link">&laquo; 上一页</a>
+    {% endif %}
+
+    <span class="page-info">第 {{ page }} / {{ total_pages }} 页</span>
+
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}" class="page-link">下一页 &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <p>未找到符合条件的商品</p>
+    <a href="{{ url_for('products') }}" class="btn btn-primary">清除筛选条件</a>
+</div>
+{% endif %}
+{% endblock %}

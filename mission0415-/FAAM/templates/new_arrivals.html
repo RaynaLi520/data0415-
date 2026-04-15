@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}每日新品 - FAAM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>每日新品</h2>
+    <p>追踪 A New Day 和 Wild Fable 品牌最新上架商品</p>
+</div>
+
+<div class="date-selector">
+    <label for="date-select">选择日期:</label>
+    <select id="date-select" onchange="window.location.href='?date=' + this.value">
+        {% for date_row in dates %}
+        <option value="{{ date_row.date_detected }}" {% if selected_date == date_row.date_detected %}selected{% endif %}>
+            {{ date_row.date_detected }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+{% if new_products %}
+<div class="products-grid">
+    {% for product in new_products %}
+    <div class="product-card">
+        <div class="product-image">
+            {% if product.image_url %}
+            <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/images/placeholder.jpg'">
+            {% else %}
+            <div class="no-image">暂无图片</div>
+            {% endif %}
+            <span class="badge badge-new">NEW</span>
+        </div>
+
+        <div class="product-info">
+            <h4 class="product-title">{{ product.title }}</h4>
+            <p class="product-brand">{{ product.brand }}</p>
+
+            <div class="product-price-section">
+                <span class="current-price">${{ "%.2f"|format(product.price) if product.price else 'N/A' }}</span>
+            </div>
+
+            {% if product.color %}
+            <p class="product-color">颜色: {{ product.color }}</p>
+            {% endif %}
+
+            <div class="product-actions">
+                {% if product.product_url %}
+                <a href="{{ product.product_url }}" target="_blank" class="btn btn-small">查看Target</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>{{ selected_date }} 暂无新品记录</p>
+</div>
+{% endif %}
+
+<div class="section">
+    <h3>关于新品检测</h3>
+    <div class="info-box">
+        <p>FAAM系统每天自动检测以下品牌的新品:</p>
+        <ul>
+            <li><strong>A New Day</strong> - Target旗下女装品牌</li>
+            <li><strong>Wild Fable</strong> - Target旗下年轻时尚品牌</li>
+        </ul>
+        <p>新品检测标准:</p>
+        <ul>
+            <li>评论数量为0</li>
+            <li>购买人数为0</li>
+            <li>预计送达时间 >= 8天</li>
+            <li>带有"New at"标签</li>
+            <li>通过QA和PDP验证</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
