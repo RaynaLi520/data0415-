@@ -1,0 +1,48 @@
+# Lingma Application Files
+Lingma.exe
+*.dll
+*.pak
+icudtl.dat
+snapshot_blob.bin
+v8_context_snapshot.bin
+*.exe
+unins000.*
+vk_swiftshader_icd.json
+Lingma.VisualElementsManifest.xml
+LICENSES.chromium.html
+chrome_100_percent.pak
+chrome_200_percent.pak
+resources.pak
+
+# Directories
+bin/
+locales/
+resources/
+_/
+tools/
+target_womens_clothing/
+
+# Lingma settings
+.lingma/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

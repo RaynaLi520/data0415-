@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GU 商品目录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
+    header { 
+      text-align: center; 
+      margin-bottom: 30px; 
+      padding: 20px 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 { font-size: 28px; color: #333; margin-bottom: 10px; }
+    .subtitle { font-size: 14px; color: #666; }
+    
+    .controls { 
+      display: flex; 
+      gap: 15px; 
+      margin-bottom: 25px; 
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .search-box { 
+      flex: 1; 
+      min-width: 250px;
+      padding: 10px 15px; 
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px; 
+      color: #333;
+      font-size: 14px; 
+      outline: none;
+    }
+    
+    .search-box:focus {
+      border-color: #007bff;
+    }
+    
+    .filter-btn { 
+      padding: 10px 20px; 
+      background: white;
+      color: #333;
+      border: 1px solid #ddd;
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn:hover { background: #f0f0f0; }
+    .filter-btn.active { background: #007bff; color: white; border-color: #007bff; }
+    
+    .stats { 
+      display: flex; 
+      gap: 20px; 
+      margin-bottom: 20px; 
+      font-size: 14px;
+      color: #666;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-item strong { color: #333; }
+    
+    .product-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+      gap: 20px; 
+    }
+    
+    .product-card { 
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .product-card:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .product-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: start;
+      margin-bottom: 15px;
+    }
+    
+    .product-id { 
+      font-size: 18px; 
+      font-weight: 600; 
+      color: #333;
+    }
+    
+    .status-badge { 
+      padding: 4px 10px; 
+      border-radius: 12px; 
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-available { background: #28a745; color: white; }
+    .status-unavailable { background: #dc3545; color: white; }
+    .status-limited { background: #ffc107; color: #333; }
+    
+    .product-links { margin-bottom: 15px; }
+    
+    .link-item { 
+      margin-bottom: 10px; 
+      padding: 10px; 
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    .link-label { 
+      font-size: 12px; 
+      color: #666;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    .link-url { 
+      font-size: 13px; 
+      color: #007bff;
+      word-break: break-all;
+      text-decoration: none;
+    }
+    
+    .link-url:hover { text-decoration: underline; }
+    
+    .notes { 
+      padding: 12px; 
+      background: #f8f9fa;
+      border-left: 3px solid #17a2b8;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .no-results { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: #666;
+      font-size: 16px;
+      background: white;
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 768px) {
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        flex-direction: column;
+      }
+      
+      .search-box {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>GU 商品目录</h1>
+    <div class="subtitle">商品链接及图片信息表</div>
+  </header>
+  
+  <div class="controls">
+    <input type="text" class="search-box" id="searchInput" placeholder="搜索商品ID或备注..." oninput="filterProducts()">
+    <button class="filter-btn active" onclick="setFilter('all')">全部</button>
+    <button class="filter-btn" onclick="setFilter('available')">可购买</button>
+    <button class="filter-btn" onclick="setFilter('unavailable')">不可用</button>
+  </div>
+  
+  <div class="stats">
+    <div class="stat-item">总计: <strong id="totalCount">0</strong></div>
+    <div class="stat-item">可购买: <strong id="availableCount">0</strong></div>
+    <div class="stat-item">不可用: <strong id="unavailableCount">0</strong></div>
+  </div>
+  
+  <div class="product-grid" id="productGrid"></div>
+</div>
+
+<script>
+const products = [
+  {
+    id: "358772",
+    guLink: "https://www.gu-global.com/jp/ja/products/E358772-000/00?colorDisplayCode=30&sizeDisplayCode=004",
+    taobaoLink: "https://detail.tmall.com/item.htm?contentSetId=-1&from=cart&id=995153542544&mi_id=0000MT1BtffkGZjNHZinU-WGB7Xg3e6DaLlXmHsZdF4_B7M&singleUseCache=true&skuId=6140526550373&spm=a1z0d.6639537%2F202410.item.d995153542544.52e17484Bcq8JO&upStreamPrice=9900",
+    notes: "",
+    status: "available"
+  },
+  {
+    id: "359990",
+    guLink: "https://www.gu-global.com/jp/ja/products/E359990-000/00?colorDisplayCode=03&sizeDisplayCode=004",
+    taobaoLink: "https://detail.tmall.com/item.htm?contentSetId=-1&from=cart&id=1038125508782&mi_id=0000MJ3cz1VzPu9wBjnG5qhEbr-Ru5tlPi60LBaaaqI_t0o&singleUseCache=true&skuId=6218288770144&spm=a1z0d.6639537%2F202410.item.d1038125508782.52e17484Bcq8JO&upStreamPrice=7900",
+    notes: "",
+    status: "available"
+  },
+  {
+    id: "358764",
+    guLink: "https://www.gu-global.com/jp/ja/products/E358764-000/00?colorDisplayCode=09&sizeDisplayCode=004",
+    taobaoLink: "https://detail.tmall.hk/hk/item.htm?from=cart&id=1036035111033&mi_id=0000B3s6WvMJPeYjQWVBjwTCYgVIscYdfMtkqD04-ISvTbs&skuId=6053726672194&spm=a1z0d.6639537%2F202410.item.d1036035111033.52e17484Bcq8JO&upStreamPrice=17600",
+    notes: "This item is only available for purchase overseas in Japan, with a delivery time of 14 days, which is insufficient.",
+    status: "limited"
+  },
+  {
+    id: "357255",
+    guLink: "https://www.gu-global.com/jp/ja/products/E352777-000/00?colorDisplayCode=03&sizeDisplayCode=004",
+    taobaoLink: "",
+    notes: "Not available on Taobao.",
+    status: "unavailable"
+  },
+  {
+    id: "358771",
+    guLink: "https://www.gu-global.com/jp/ja/products/E358771-000/00?colorDisplayCode=06&sizeDisplayCode=004",
+    taobaoLink: "https://detail.tmall.com/item.htm?contentSetId=-1&from=cart&id=995927545820&mi_id=0000_P5GSFg8sGxQ0yjEdjcYS5pj-_Oq4Qqdb0YtNygYKHw&singleUseCache=true&skuId=6141421871762&spm=a1z0d.6639537%2F202410.item.d995927545820.52e17484Bcq8JO&upStreamPrice=9900",
+    notes: "As there is no sample garment tag, the product style number is unknown. Three similar items have been found on the official GU website for reference.",
+    status: "available"
+  },
+  {
+    id: "352965",
+    guLink: "https://www.gu-global.com/jp/ja/products/E348900-000/00?colorDisplayCode=06&sizeDisplayCode=004",
+    taobaoLink: "",
+    notes: "As there is no sample garment tag, the product style number is unknown. Three similar items have been found on the official GU website for reference.",
+    status: "unavailable"
+  },
+  {
+    id: "359255",
+    guLink: "https://www.gu-global.com/jp/ja/products/E359255-000/00?colorDisplayCode=06&sizeDisplayCode=004",
+    taobaoLink: "https://detail.tmall.com/item.htm?contentSetId=-1&from=cart&id=877694539249&mi_id=0000qderPskCTJLP5lg7aJ32_xSsH_K9FZQi1Scng8R5GBI&singleUseCache=true&skuId=5719568917914&spm=a1z0d.6639537%2F202410.item.d877694539249.52e17484Bcq8JO&upStreamPrice=9900",
+    notes: "As there is no sample garment tag, the product style number is unknown. Three similar items have been found on the official GU website for reference.",
+    status: "available"
+  }
+];
+
+let currentFilter = 'all';
+
+function getStatusBadge(status) {
+  const badges = {
+    'available': '<span class="status-badge status-available">可购买</span>',
+    'unavailable': '<span class="status-badge status-unavailable">不可用</span>',
+    'limited': '<span class="status-badge status-limited">受限</span>'
+  };
+  return badges[status] || '';
+}
+
+function renderProducts(filteredProducts) {
+  const grid = document.getElementById('productGrid');
+  
+  if (filteredProducts.length === 0) {
+    grid.innerHTML = '<div class="no-results">没有找到匹配的商品</div>';
+    return;
+  }
+  
+  grid.innerHTML = filteredProducts.map(product => `
+    <div class="product-card">
+      <div class="product-header">
+        <div class="product-id">#${product.id}</div>
+        ${getStatusBadge(product.status)}
+      </div>
+      
+      <div class="product-links">
+        <div class="link-item">
+          <div class="link-label">GU 官网</div>
+          <a href="${product.guLink}" target="_blank" class="link-url">${product.guLink}</a>
+        </div>
+        ${product.taobaoLink ? `
+        <div class="link-item">
+          <div class="link-label">淘宝购买</div>
+          <a href="${product.taobaoLink}" target="_blank" class="link-url">${product.taobaoLink}</a>
+        </div>
+        ` : ''}
+      </div>
+      
+      ${product.notes ? `
+      <div class="notes">
+        <strong>备注:</strong><br>
+        ${product.notes}
+      </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function updateStats(filteredProducts) {
+  document.getElementById('totalCount').textContent = products.length;
+  document.getElementById('availableCount').textContent = products.filter(p => p.status === 'available' || p.status === 'limited').length;
+  document.getElementById('unavailableCount').textContent = products.filter(p => p.status === 'unavailable').length;
+}
+
+function filterProducts() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  
+  let filtered = products;
+  
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(p => p.status === currentFilter);
+  }
+  
+  if (searchTerm) {
+    filtered = filtered.filter(p => 
+      p.id.toLowerCase().includes(searchTerm) || 
+      (p.notes && p.notes.toLowerCase().includes(searchTerm))
+    );
+  }
+  
+  renderProducts(filtered);
+  updateStats(filtered);
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  filterProducts();
+}
+
+// Initial render
+renderProducts(products);
+updateStats(products);
+</script>
+</body>
+</html>
