@@ -124,6 +124,9 @@ def products():
     brand = request.args.get('brand', '')
     is_new = request.args.get('is_new', '')
     search = request.args.get('search', '')
+    tcin = request.args.get('tcin', '')
+    is_clearance = request.args.get('is_clearance', '')
+    has_discount = request.args.get('has_discount', '')
     page = request.args.get('page', 1, type=int)
     per_page = 24
 
@@ -142,6 +145,19 @@ def products():
     if is_new == 'yes':
         query += ' AND is_new = "Yes"'
         count_query += ' AND is_new = "Yes"'
+
+    if tcin:
+        query += ' AND tcin = ?'
+        count_query += ' AND tcin = ?'
+        params.append(tcin)
+
+    if is_clearance == 'yes':
+        query += ' AND is_clearance = "Yes"'
+        count_query += ' AND is_clearance = "Yes"'
+
+    if has_discount == 'yes':
+        query += ' AND (discount_percentage IS NOT NULL AND discount_percentage != "" AND discount_percentage != "0%")'
+        count_query += ' AND (discount_percentage IS NOT NULL AND discount_percentage != "" AND discount_percentage != "0%")'
 
     if search:
         query += ' AND (title LIKE ? OR brand LIKE ?)'
@@ -167,6 +183,9 @@ def products():
                          brand=brand,
                          is_new=is_new,
                          search=search,
+                         tcin=tcin,
+                         is_clearance=is_clearance,
+                         has_discount=has_discount,
                          total=total)
 
 @app.route('/new-arrivals')
