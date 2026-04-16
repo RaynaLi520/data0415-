@@ -191,18 +191,26 @@ def products():
 @app.route('/new-arrivals')
 def new_arrivals():
     """Daily new arrivals page"""
-    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    date = request.args.get('date', '')
 
     conn = get_db_connection()
 
-    # Get new arrivals for selected date
-    new_products = conn.execute('''
-        SELECT dna.*, p.*
-        FROM daily_new_arrivals dna
-        LEFT JOIN products p ON dna.tcin = p.tcin
-        WHERE dna.date_detected = ?
-        ORDER BY dna.id DESC
-    ''', (date,)).fetchall()
+    # Get new arrivals for selected date (or all if empty/all)
+    if date and date != 'all':
+        new_products = conn.execute('''
+            SELECT dna.*, p.*
+            FROM daily_new_arrivals dna
+            LEFT JOIN products p ON dna.tcin = p.tcin
+            WHERE dna.date_detected = ?
+            ORDER BY dna.id DESC
+        ''', (date,)).fetchall()
+    else:
+        new_products = conn.execute('''
+            SELECT dna.*, p.*
+            FROM daily_new_arrivals dna
+            LEFT JOIN products p ON dna.tcin = p.tcin
+            ORDER BY dna.date_detected DESC, dna.id DESC
+        ''').fetchall()
 
     # Get available dates
     dates = conn.execute('''
@@ -242,6 +250,65 @@ def api_products():
     conn.close()
 
     return jsonify([dict(p) for p in products])
+
+@app.route('/api/dashboard')
+def api_dashboard():
+    """API endpoint for dashboard chart data (new arrivals only)"""
+    date = request.args.get('date', '')
+
+    conn = get_db_connection()
+
+    # 每日新品数量趋势
+    daily_counts = conn.execute('''
+        SELECT date_detected, COUNT(*) as count
+        FROM daily_new_arrivals
+        GROUP BY date_detected
+        ORDER BY date_detected ASC
+    ''').fetchall()
+
+    # 构建过滤条件
+    date_filter = ''
+    params = []
+    if date and date != 'all':
+        date_filter = 'WHERE dna.date_detected = ?'
+        params.append(date)
+
+    # 新品类别分布（前10）- 基于daily_new_arrivals，可过滤日期
+    category_sql = f'''
+        SELECT p.item_type, COUNT(*) as count
+        FROM daily_new_arrivals dna
+        LEFT JOIN products p ON dna.tcin = p.tcin
+        {date_filter}
+        AND p.item_type IS NOT NULL AND p.item_type != ''
+        GROUP BY p.item_type
+        ORDER BY count DESC
+        LIMIT 10
+    '''
+    category_stats = conn.execute(category_sql, params).fetchall()
+
+    # 新品品牌分布 - 基于daily_new_arrivals，可过滤日期
+    brand_sql = f'''
+        SELECT dna.brand, COUNT(*) as count
+        FROM daily_new_arrivals dna
+        {date_filter}
+        GROUP BY dna.brand
+    '''
+    brand_stats = conn.execute(brand_sql, params).fetchall()
+
+    # 获取选中日期的商品列表TCIN（用于过滤展示）
+    product_tcins = []
+    if date and date != 'all':
+        rows = conn.execute('SELECT tcin FROM daily_new_arrivals WHERE date_detected = ?', (date,)).fetchall()
+        product_tcins = [r['tcin'] for r in rows]
+
+    conn.close()
+
+    return jsonify({
+        'daily_counts': [dict(row) for row in daily_counts],
+        'category_stats': [dict(row) for row in category_stats],
+        'brand_stats': [dict(row) for row in brand_stats],
+        'product_tcins': product_tcins
+    })
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):

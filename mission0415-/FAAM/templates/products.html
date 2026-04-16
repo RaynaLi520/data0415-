@@ -9,53 +9,55 @@
 </div>
 
 <div class="filters">
-    <form method="get" class="filter-form">
+    <form method="get" class="filter-form" id="filter-form">
+        <!-- Row 1: Search + TCIN -->
         <div class="filter-group">
             <label for="search">搜索:</label>
             <input type="text" id="search" name="search" value="{{ search }}" placeholder="商品名称...">
         </div>
-
         <div class="filter-group">
             <label for="tcin">TCIN:</label>
-            <input type="text" id="tcin" name="tcin" value="{{ tcin }}" placeholder="输入TCIN号码">
+            <input type="text" id="tcin" name="tcin" value="{{ tcin }}" placeholder="输入TCIN号码" style="max-width:200px">
         </div>
-
-        <div class="filter-group">
-            <label for="brand">品牌:</label>
-            <select id="brand" name="brand">
-                <option value="">全部品牌</option>
-                <option value="A New Day" {% if brand == 'A New Day' %}selected{% endif %}>A New Day</option>
-                <option value="Wild Fable" {% if brand == 'Wild Fable' %}selected{% endif %}>Wild Fable</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="is_new">新品:</label>
-            <select id="is_new" name="is_new">
-                <option value="">全部</option>
-                <option value="yes" {% if is_new == 'yes' %}selected{% endif %}>仅看新品</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="is_clearance">清仓:</label>
-            <select id="is_clearance" name="is_clearance">
-                <option value="">全部</option>
-                <option value="yes" {% if is_clearance == 'yes' %}selected{% endif %}>仅看清仓</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="has_discount">折扣:</label>
-            <select id="has_discount" name="has_discount">
-                <option value="">全部</option>
-                <option value="yes" {% if has_discount == 'yes' %}selected{% endif %}>仅看折扣</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary">筛选</button>
-        <a href="{{ url_for('products') }}" class="btn btn-secondary">重置</a>
+        <button type="submit" class="btn btn-primary" style="height:fit-content;align-self:flex-end">搜索</button>
+        <a href="{{ url_for('products') }}" class="btn btn-secondary" style="height:fit-content;align-self:flex-end">重置</a>
     </form>
+    <hr style="border:none;border-top:1px solid #eee;margin:1rem 0">
+    <!-- Toggle button rows -->
+    <div class="filter-row">
+        <span class="filter-label">品牌:</span>
+        <div class="toggle-group">
+            <a href="?brand=&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if not brand %}active{% endif %}">全部</a>
+            <a href="?brand=A New Day&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if brand == 'A New Day' %}active{% endif %}">A New Day</a>
+            <a href="?brand=Wild Fable&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if brand == 'Wild Fable' %}active{% endif %}">Wild Fable</a>
+        </div>
+    </div>
+    <div class="filter-row">
+        <span class="filter-label">新品:</span>
+        <div class="toggle-group">
+            <a href="?brand={{ brand }}&is_new=&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if not is_new %}active{% endif %}">全部</a>
+            <a href="?brand={{ brand }}&is_new=yes&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if is_new == 'yes' %}active{% endif %}">仅看新品</a>
+        </div>
+        <span class="filter-label" style="margin-left:1rem">清仓:</span>
+        <div class="toggle-group">
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if not is_clearance %}active{% endif %}">全部</a>
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=yes&has_discount={{ has_discount }}&search={{ search }}"
+               class="toggle-btn {% if is_clearance == 'yes' %}active{% endif %}">仅看清仓</a>
+        </div>
+        <span class="filter-label" style="margin-left:1rem">折扣:</span>
+        <div class="toggle-group">
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=&search={{ search }}"
+               class="toggle-btn {% if not has_discount %}active{% endif %}">全部</a>
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=yes&search={{ search }}"
+               class="toggle-btn {% if has_discount == 'yes' %}active{% endif %}">仅看折扣</a>
+        </div>
+    </div>
 </div>
 
 {% if products %}
@@ -118,6 +120,17 @@
     {% if page > 1 %}
     <a href="?page={{ page - 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}" class="page-link">&laquo; 上一页</a>
     {% endif %}
+
+    <form class="page-jump-form" method="get" action="">
+        <input type="hidden" name="brand" value="{{ brand }}">
+        <input type="hidden" name="is_new" value="{{ is_new }}">
+        <input type="hidden" name="search" value="{{ search }}">
+        <input type="hidden" name="tcin" value="{{ tcin }}">
+        <input type="hidden" name="is_clearance" value="{{ is_clearance }}">
+        <input type="hidden" name="has_discount" value="{{ has_discount }}">
+        <input type="number" name="page" min="1" max="{{ total_pages }}" value="{{ page }}" class="page-input" id="page-input">
+        <button type="submit" class="page-jump-btn">跳转</button>
+    </form>
 
     <span class="page-info">第 {{ page }} / {{ total_pages }} 页</span>
 

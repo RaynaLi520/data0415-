@@ -8,9 +8,35 @@
     <p>追踪 A New Day 和 Wild Fable 品牌最新上架商品</p>
 </div>
 
+<!-- Dashboard -->
+<div class="dashboard">
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-number" id="stat-today">{{ new_products|length }}</div>
+            <div class="stat-label">今日新品</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-container full-width">
+            <h4>每日新品趋势</h4>
+            <canvas id="dailyChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h4>新品类别分布 (Top 10)</h4>
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h4>新品品牌分布</h4>
+            <canvas id="brandChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <div class="date-selector">
     <label for="date-select">选择日期:</label>
     <select id="date-select" onchange="window.location.href='?date=' + this.value">
+        <option value="" {% if not selected_date %}selected{% endif %}>全部</option>
         {% for date_row in dates %}
         <option value="{{ date_row.date_detected }}" {% if selected_date == date_row.date_detected %}selected{% endif %}>
             {{ date_row.date_detected }}
@@ -22,7 +48,7 @@
 {% if new_products %}
 <div class="products-grid">
     {% for product in new_products %}
-    <div class="product-card">
+    <div class="product-card" data-item-type="{{ product.item_type }}">
         <div class="product-image">
             {% if product.image_url %}
             <img src="{{ product.image_url }}" alt="{{ product.title }}" onerror="this.src='/static/images/placeholder.svg'">
@@ -77,4 +103,272 @@
         </ul>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// All chart instances
+let dailyChart, categoryChart, brandChart;
+// Color palette
+const colors = [
+    '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe',
+    '#00f2fe', '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+];
+
+// Get current date param from URL
+function getCurrentDate() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('date') || '';
+}
+
+// Navigate to a date
+function goToDate(date) {
+    const params = new URLSearchParams(window.location.search);
+    if (date) {
+        params.set('date', date);
+    } else {
+        params.delete('date');
+    }
+    window.location.search = params.toString();
+}
+
+async function loadDashboard() {
+    const currentDate = getCurrentDate();
+    try {
+        const url = '/api/dashboard' + (currentDate ? '?date=' + encodeURIComponent(currentDate) : '');
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Update stat card
+        const totalItems = data.category_stats.reduce((s, r) => s + r.count, 0);
+        document.getElementById('stat-today').textContent = totalItems;
+
+        // Render charts
+        if (typeof Chart !== 'undefined') {
+            renderDailyChart(data.daily_counts);
+            renderCategoryChart(data.category_stats);
+            renderBrandChart(data.brand_stats);
+        }
+
+        // Apply date-based product filtering
+        applyProductFilter(data.product_tcins);
+    } catch (error) {
+        console.error('Failed to load dashboard:', error);
+    }
+}
+
+function renderDailyChart(dailyData) {
+    const ctx = document.getElementById('dailyChart').getContext('2d');
+    const labels = dailyData.map(item => item.date_detected.substring(5));
+    const counts = dailyData.map(item => item.count);
+    const dates = dailyData.map(item => item.date_detected);
+    const currentDate = getCurrentDate();
+
+    // Highlight selected date point
+    const pointBgColors = dates.map(d => (currentDate && d === currentDate) ? '#f5576c' : '#667eea');
+    const pointRadii = dates.map(d => (currentDate && d === currentDate) ? 7 : 4);
+
+    if (dailyChart) dailyChart.destroy();
+    dailyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '新品数量',
+                data: counts,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: pointBgColors,
+                pointRadius: pointRadii,
+                pointHoverRadius: 7,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            const idx = items[0].dataIndex;
+                            return dates[idx];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            },
+            onClick: function(e, elements) {
+                if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    goToDate(dates[idx]);
+                }
+            }
+        }
+    });
+}
+
+function renderCategoryChart(categoryData) {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    const labels = categoryData.map(item => item.item_type || '未分类');
+    const counts = categoryData.map(item => item.count);
+
+    if (categoryChart) categoryChart.destroy();
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.label + ': ' + ctx.raw + ' 件';
+                        }
+                    }
+                }
+            },
+            onClick: function(e, elements) {
+                if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    const itemType = categoryData[idx].item_type;
+                    filterProductsByCategory(itemType);
+                }
+            }
+        }
+    });
+}
+
+function renderBrandChart(brandData) {
+    const ctx = document.getElementById('brandChart').getContext('2d');
+    const labels = brandData.map(item => item.brand);
+    const counts = brandData.map(item => item.count);
+
+    if (brandChart) brandChart.destroy();
+    brandChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: ['#667eea', '#764ba2'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.label + ': ' + ctx.raw + ' 件';
+                        }
+                    }
+                }
+            },
+            onClick: function(e, elements) {
+                if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    const brand = brandData[idx].brand;
+                    filterProductsByBrand(brand);
+                }
+            }
+        }
+    });
+}
+
+// Filter product cards by TCIN list
+function applyProductFilter(tcins) {
+    if (!tcins || tcins.length === 0) {
+        // Show all products
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = '';
+        });
+        return;
+    }
+    document.querySelectorAll('.product-card').forEach(card => {
+        // We use a data attribute approach
+    });
+}
+
+// Filter products by category (item_type)
+function filterProductsByCategory(itemType) {
+    const cards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+    cards.forEach(card => {
+        const title = card.querySelector('.product-title');
+        if (!title) return;
+        const productData = card.dataset;
+        // Check if this product's item_type matches
+        const cardItemType = card.getAttribute('data-item-type') || '';
+        if (cardItemType === itemType) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    updateFilterBadge('类别: ' + itemType, visibleCount);
+}
+
+// Filter products by brand
+function filterProductsByBrand(brand) {
+    const cards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+    cards.forEach(card => {
+        const brandEl = card.querySelector('.product-brand');
+        if (!brandEl) return;
+        if (brandEl.textContent.trim() === brand) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    updateFilterBadge('品牌: ' + brand, visibleCount);
+}
+
+function updateFilterBadge(text, count) {
+    // Remove existing badge
+    let badge = document.getElementById('filter-badge');
+    if (badge) badge.remove();
+
+    badge = document.createElement('div');
+    badge.id = 'filter-badge';
+    badge.className = 'filter-badge';
+    badge.innerHTML = `<span class="badge-text">筛选: ${text}（${count}件）</span> <button class="badge-clear" onclick="clearFilter()">清除</button>`;
+    const dateSelector = document.querySelector('.date-selector');
+    dateSelector.parentNode.insertBefore(badge, dateSelector.nextSibling);
+}
+
+function clearFilter() {
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.style.display = '';
+    });
+    const badge = document.getElementById('filter-badge');
+    if (badge) badge.remove();
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
 {% endblock %}
