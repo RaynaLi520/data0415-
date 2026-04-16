@@ -478,6 +478,36 @@ body {
     color: white;
 }
 
+/* Category filter row - horizontal scroll */
+.category-row {
+    max-width: 100%;
+}
+
+.category-group {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+}
+
+.category-group::-webkit-scrollbar {
+    height: 6px;
+}
+
+.category-group::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.category-group::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.category-group::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
 /* Dashboard */
 .dashboard {
     background: white;

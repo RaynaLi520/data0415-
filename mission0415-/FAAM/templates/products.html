@@ -27,35 +27,46 @@
     <div class="filter-row">
         <span class="filter-label">品牌:</span>
         <div class="toggle-group">
-            <a href="?brand=&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand=&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if not brand %}active{% endif %}">全部</a>
-            <a href="?brand=A New Day&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand=A New Day&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if brand == 'A New Day' %}active{% endif %}">A New Day</a>
-            <a href="?brand=Wild Fable&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand=Wild Fable&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if brand == 'Wild Fable' %}active{% endif %}">Wild Fable</a>
         </div>
     </div>
     <div class="filter-row">
         <span class="filter-label">新品:</span>
         <div class="toggle-group">
-            <a href="?brand={{ brand }}&is_new=&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new=&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if not is_new %}active{% endif %}">全部</a>
-            <a href="?brand={{ brand }}&is_new=yes&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new=yes&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if is_new == 'yes' %}active{% endif %}">仅看新品</a>
         </div>
         <span class="filter-label" style="margin-left:1rem">清仓:</span>
         <div class="toggle-group">
-            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if not is_clearance %}active{% endif %}">全部</a>
-            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=yes&has_discount={{ has_discount }}&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance=yes&has_discount={{ has_discount }}&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if is_clearance == 'yes' %}active{% endif %}">仅看清仓</a>
         </div>
         <span class="filter-label" style="margin-left:1rem">折扣:</span>
         <div class="toggle-group">
-            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if not has_discount %}active{% endif %}">全部</a>
-            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=yes&search={{ search }}"
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount=yes&search={{ search }}&item_type={{ item_type }}"
                class="toggle-btn {% if has_discount == 'yes' %}active{% endif %}">仅看折扣</a>
+        </div>
+    </div>
+    <div class="filter-row category-row">
+        <span class="filter-label">类别:</span>
+        <div class="toggle-group category-group">
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type="
+               class="toggle-btn {% if not item_type %}active{% endif %}">全部</a>
+            {% for t in item_types %}
+            <a href="?brand={{ brand }}&is_new={{ is_new }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&search={{ search }}&item_type={{ t.item_type | urlencode }}"
+               class="toggle-btn {% if item_type == t.item_type %}active{% endif %}">{{ t.item_type }} <span style="opacity:0.7;font-size:0.8em">{{ t.cnt }}</span></a>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -118,7 +129,7 @@
 {% if total_pages > 1 %}
 <div class="pagination">
     {% if page > 1 %}
-    <a href="?page={{ page - 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}" class="page-link">&laquo; 上一页</a>
+    <a href="?page={{ page - 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&item_type={{ item_type | urlencode }}" class="page-link">&laquo; 上一页</a>
     {% endif %}
 
     <form class="page-jump-form" method="get" action="">
@@ -128,6 +139,7 @@
         <input type="hidden" name="tcin" value="{{ tcin }}">
         <input type="hidden" name="is_clearance" value="{{ is_clearance }}">
         <input type="hidden" name="has_discount" value="{{ has_discount }}">
+        <input type="hidden" name="item_type" value="{{ item_type }}">
         <input type="number" name="page" min="1" max="{{ total_pages }}" value="{{ page }}" class="page-input" id="page-input">
         <button type="submit" class="page-jump-btn">跳转</button>
     </form>
@@ -135,7 +147,7 @@
     <span class="page-info">第 {{ page }} / {{ total_pages }} 页</span>
 
     {% if page < total_pages %}
-    <a href="?page={{ page + 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}" class="page-link">下一页 &raquo;</a>
+    <a href="?page={{ page + 1 }}&brand={{ brand }}&is_new={{ is_new }}&search={{ search }}&tcin={{ tcin }}&is_clearance={{ is_clearance }}&has_discount={{ has_discount }}&item_type={{ item_type | urlencode }}" class="page-link">下一页 &raquo;</a>
     {% endif %}
 </div>
 {% endif %}

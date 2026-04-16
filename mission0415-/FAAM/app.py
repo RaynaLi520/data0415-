@@ -127,6 +127,7 @@ def products():
     tcin = request.args.get('tcin', '')
     is_clearance = request.args.get('is_clearance', '')
     has_discount = request.args.get('has_discount', '')
+    item_type = request.args.get('item_type', '')
     page = request.args.get('page', 1, type=int)
     per_page = 24
 
@@ -159,6 +160,11 @@ def products():
         query += ' AND (discount_percentage IS NOT NULL AND discount_percentage != "" AND discount_percentage != "0%")'
         count_query += ' AND (discount_percentage IS NOT NULL AND discount_percentage != "" AND discount_percentage != "0%")'
 
+    if item_type:
+        query += ' AND item_type = ?'
+        count_query += ' AND item_type = ?'
+        params.append(item_type)
+
     if search:
         query += ' AND (title LIKE ? OR brand LIKE ?)'
         count_query += ' AND (title LIKE ? OR brand LIKE ?)'
@@ -174,6 +180,16 @@ def products():
     params.extend([per_page, (page - 1) * per_page])
 
     products_list = conn.execute(query, params).fetchall()
+
+    # Get all item types for filter
+    item_types = conn.execute('''
+        SELECT item_type, COUNT(*) as cnt
+        FROM products
+        WHERE item_type IS NOT NULL AND item_type != ''
+        GROUP BY item_type
+        ORDER BY cnt DESC
+    ''').fetchall()
+
     conn.close()
 
     return render_template('products.html',
@@ -186,6 +202,8 @@ def products():
                          tcin=tcin,
                          is_clearance=is_clearance,
                          has_discount=has_discount,
+                         item_type=item_type,
+                         item_types=item_types,
                          total=total)
 
 @app.route('/new-arrivals')
